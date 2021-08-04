@@ -189,7 +189,7 @@ function TeleportPlayerWithCar(playerPed, x, y, z, heading)
     if IsPedInAnyVehicle(playerPed, false) then
         SetEntityHeading(GetVehiclePedIsIn(playerPed, false), heading)
     else
-        SetEntityHeading(heading)
+        SetEntityHeading(playerPed, heading)
     end
     Citizen.Wait(1000)
     DoScreenFadeIn(250)
