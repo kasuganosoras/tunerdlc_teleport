@@ -2,6 +2,8 @@ local tuna_interior_id    = GetInteriorAtCoords(vector3(-1350.0, 160.0, -100.0))
 local meetup_interior_id  = GetInteriorAtCoords(vector3(-2000.0, 1113.211, -25.36243))
 local methlab_interior_id = GetInteriorAtCoords(vector3(981.9999, -143.0, -50.0))
 local enteredInteriorId   = nil
+local playerPed
+local playerCoords
 
 local EntitySetsTuner = {
     ['entity_set_bedroom']           = true,
@@ -100,52 +102,63 @@ end)
 
 -- Main thread
 Citizen.CreateThread(function()
+	local sleep
     while true do
-        Citizen.Wait(0)
-        local playerPed = GetPlayerPed(-1)
-        -- Enable the Los Santos Car Meet?
-        if Config.EnableCarMeet then
-            if GetDistanceBetweenCoords(GetEntityCoords(playerPed), Config.CarMeet.enter.x, Config.CarMeet.enter.y, Config.CarMeet.enter.z, true) < 5.0 then
-                if KeyTips(Config.CarMeet.name, true) and IsControlJustPressed(0, 51) then
-                    TeleportPlayerWithCar(playerPed, Config.CarMeet.leave.x, Config.CarMeet.leave.y, Config.CarMeet.leave.z, Config.CarMeet.leave.h)
-                end
-            elseif GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), Config.CarMeet.leave.x, Config.CarMeet.leave.y, Config.CarMeet.leave.z, true) < 5.0 then
-                if KeyTips(Config.CarMeet.name, false) and IsControlJustPressed(0, 51) then
-                    TeleportPlayerWithCar(playerPed, Config.CarMeet.enter.x, Config.CarMeet.enter.y, Config.CarMeet.enter.z, Config.CarMeet.enter.h)
-                end
-            elseif GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), Config.DriftTrack.enter.x, Config.DriftTrack.enter.y, Config.DriftTrack.enter.z, true) < 5.0 then
-                if KeyTips(Config.DriftTrack.name, true) and IsControlJustPressed(0, 51) then
-                    TeleportPlayerWithCar(playerPed, Config.DriftTrack.leave.x, Config.DriftTrack.leave.y, Config.DriftTrack.leave.z, Config.DriftTrack.leave.h)
-                end
-            elseif GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), Config.DriftTrack.leave.x, Config.DriftTrack.leave.y, Config.DriftTrack.leave.z, true) < 5.0 then
-                if KeyTips(Config.DriftTrack.name, false) and IsControlJustPressed(0, 51) then
-                    TeleportPlayerWithCar(playerPed, Config.DriftTrack.enter.x, Config.DriftTrack.enter.y, Config.DriftTrack.enter.z, Config.DriftTrack.enter.h)
-                end
-            end
-        end
-        -- Enable the autoshop garage?
-        if Config.EnableGarage then
-            for k, v in pairs(Config.Garage) do
-                if GetDistanceBetweenCoords(GetEntityCoords(playerPed), v.enter.x, v.enter.y, v.enter.z, true) < 5.0 then
-                    if KeyTips(v.name, true) and IsControlJustPressed(0, 51) then
-                        enteredInteriorId = k
-                        DisableInteriors()
-                        ActivateInteriorEntitySet(tuna_interior_id, v.style)
-                        RefreshInterior(tuna_interior_id)
-                        TeleportPlayerWithCar(playerPed, v.leave.x, v.leave.y, v.leave.z, v.leave.h)
-                    end
-                elseif GetDistanceBetweenCoords(GetEntityCoords(GetPlayerPed(-1)), v.leave.x, v.leave.y, v.leave.z, true) < 5.0 then
-                    if KeyTips(v.name, false) and IsControlJustPressed(0, 51) then
-                        if enteredInteriorId ~= nil then
-                            TeleportPlayerWithCar(playerPed, Config.Garage[enteredInteriorId].enter.x, Config.Garage[enteredInteriorId].enter.y, Config.Garage[enteredInteriorId].enter.z, Config.Garage[enteredInteriorId].enter.h)
-                        else
-                            TeleportPlayerWithCar(playerPed, v.enter.x, v.enter.y, v.enter.z, v.enter.h)
-                        end
-                        DisableInteriors()
-                    end
-                end
-            end
-        end
+        sleep = 1000
+        playerPed = GetPlayerPed(-1)
+		playerCoords = GetEntityCoords(playerPed)
+		if not IsPedFatallyInjured(playerPed) then
+			-- Enable the Los Santos Car Meet?
+			if Config.EnableCarMeet then
+				if #(playerCoords - vector3(Config.CarMeet.enter.x, Config.CarMeet.enter.y, Config.CarMeet.enter.z)) < 5.0 then
+					sleep = 0
+					if KeyTips(Config.CarMeet.name, true) and IsControlJustPressed(0, 51) then
+						TeleportPlayerWithCar(playerPed, Config.CarMeet.leave.x, Config.CarMeet.leave.y, Config.CarMeet.leave.z, Config.CarMeet.leave.h)
+					end
+				elseif #(playerCoords - vector3(Config.CarMeet.leave.x, Config.CarMeet.leave.y, Config.CarMeet.leave.z)) < 5.0 then
+					sleep = 0
+					if KeyTips(Config.CarMeet.name, false) and IsControlJustPressed(0, 51) then
+						TeleportPlayerWithCar(playerPed, Config.CarMeet.enter.x, Config.CarMeet.enter.y, Config.CarMeet.enter.z, Config.CarMeet.enter.h)
+					end
+				elseif #(playerCoords - vector3(Config.DriftTrack.enter.x, Config.DriftTrack.enter.y, Config.DriftTrack.enter.z)) < 5.0 then
+					sleep = 0
+					if KeyTips(Config.DriftTrack.name, true) and IsControlJustPressed(0, 51) then
+						TeleportPlayerWithCar(playerPed, Config.DriftTrack.leave.x, Config.DriftTrack.leave.y, Config.DriftTrack.leave.z, Config.DriftTrack.leave.h)
+					end
+				elseif #(playerCoords - vector3(Config.DriftTrack.leave.x, Config.DriftTrack.leave.y, Config.DriftTrack.leave.z)) < 5.0 then
+					sleep = 0
+					if KeyTips(Config.DriftTrack.name, false) and IsControlJustPressed(0, 51) then
+						TeleportPlayerWithCar(playerPed, Config.DriftTrack.enter.x, Config.DriftTrack.enter.y, Config.DriftTrack.enter.z, Config.DriftTrack.enter.h)
+					end
+				end
+			end
+			-- Enable the autoshop garage?
+			if Config.EnableGarage then
+				for k, v in pairs(Config.Garage) do
+					if #(playerCoords - vector3(v.enter.x, v.enter.y, v.enter.z)) < 5.0 then
+						sleep = 0
+						if KeyTips(v.name, true) and IsControlJustPressed(0, 51) then
+							enteredInteriorId = k
+							DisableInteriors()
+							ActivateInteriorEntitySet(tuna_interior_id, v.style)
+							RefreshInterior(tuna_interior_id)
+							TeleportPlayerWithCar(playerPed, v.leave.x, v.leave.y, v.leave.z, v.leave.h)
+						end
+					elseif #(playerCoords - vector3(v.leave.x, v.leave.y, v.leave.z)) < 5.0 then
+						sleep = 0
+						if KeyTips(v.name, false) and IsControlJustPressed(0, 51) then
+							if enteredInteriorId ~= nil then
+								TeleportPlayerWithCar(playerPed, Config.Garage[enteredInteriorId].enter.x, Config.Garage[enteredInteriorId].enter.y, Config.Garage[enteredInteriorId].enter.z, Config.Garage[enteredInteriorId].enter.h)
+							else
+								TeleportPlayerWithCar(playerPed, v.enter.x, v.enter.y, v.enter.z, v.enter.h)
+							end
+							DisableInteriors()
+						end
+					end
+				end
+			end
+		end
+		Citizen.Wait(sleep)
     end
 end)
 
@@ -170,7 +183,7 @@ function IsBlackListVehicle(vehicle)
 end
 
 function KeyTips(name, enter)
-    if IsBlackListVehicle(GetVehiclePedIsIn(GetPlayerPed(-1), false)) then
+    if IsBlackListVehicle(GetVehiclePedIsIn(playerPed, false)) then
         DisplayHelpText(string.format("%s %s", Config.Language["black_lists"], name))
         return false
     elseif enter then
